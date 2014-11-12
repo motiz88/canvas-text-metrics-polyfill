@@ -5,7 +5,7 @@ A polyfill for the enhanced `context.measureText()` in HTML `<canvas>` v5 / Canv
 
 The upcoming version of `<canvas>` will offer a standard way to get 2D font metrics, via properties added to the `TextMetrics` object (returned by `context.measureText()`). This feature was drafted in March 2012, but virtually all current browsers (as of November 2014) still follow the older spec and only provide the `TextMetrics.width` property.
 
-This library provides a robust polyfill for this functionality, targeting browsers with reasonable support for pre-Level 2 `<canvas>`.
+This library provides a robust polyfill for the missing metrics on clients with pre-Level 2 `<canvas>`.
 
 API reference
 -------------
