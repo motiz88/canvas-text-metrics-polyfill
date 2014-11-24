@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<title>Canvas test: 2d.text.draw.text.metrics</title>
+<script src="from-blink/tests.js"></script>
+<link rel="stylesheet" href="from-blink/tests.css">
+<style>
+@font-face {
+  font-family: CanvasTest;
+  src: url("from-blink/CanvasTest.ttf");
+}
+</style>
+
+<script src="../build/canvas-text-metrics-polyfill.js"></script>
+<body>
+<p id="passtext">Pass</p>
+<p id="failtext">Fail</p>
+<span style="font-family: CanvasTest; position: absolute; visibility: hidden">A</span>
+<p class="output">These images should be identical:</p>
+<canvas id="c" class="output" width="100" height="50"><p class="fallback">FAIL (fallback content)</p></canvas>
+<p class="output expectedtext">Expected output:<p><img src="from-blink/images/green-100x50.png" class="output expected" id="expected" alt="">
+<ul id="d"></ul>
+<script src="2d.text.draw.text.metrics.js"></script>

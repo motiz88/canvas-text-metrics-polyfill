@@ -1,0 +1,40 @@
+{
+  "name": "canvas-text-metrics-polyfill",
+  "version": "0.2.1",
+  "description": "A polyfill for the enhanced context.measureText() in HTML <canvas> v5 / Canvas",
+  "main": "src/canvas-text-metrics-polyfill.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/motiz88/canvas-text-metrics-polyfill.git"
+  },
+  "keywords": [
+    "canvas",
+    "text",
+    "metrics",
+    "polyfill",
+    "measureText",
+    "ascent",
+    "descent",
+    "bounding",
+    "box"
+  ],
+  "author": "Moti Zilberman",
+  "license": "MIT (Expat)",
+  "bugs": {
+    "url": "https://github.com/motiz88/canvas-text-metrics-polyfill/issues"
+  },
+  "homepage": "https://github.com/motiz88/canvas-text-metrics-polyfill",
+  "devDependencies": {
+    "grunt": "^0.4.5",
+    "grunt-browserify": "^3.2.1",
+    "grunt-contrib-jshint": "^0.10.0",
+    "grunt-contrib-uglify": "^0.6.0",
+    "grunt-contrib-watch": "^0.6.1"
+  }
+}
