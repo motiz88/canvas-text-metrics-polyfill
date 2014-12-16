@@ -546,9 +546,11 @@ module.exports = function SVGMeasurementContext() {
 			return;
 		if (!textElement_) {
 			textElement_ = document_.createElementNS(svgNS, 'text');
-			textElement_.x.baseVal = 0;
-			textElement_.y.baseVal = 0;
-			textElement_.setAttributeNS(svgNS, 'fill', 'black');
+			//textElement_.x.baseVal = 0;
+			//textElement_.y.baseVal = 0;
+			textElement_.setAttribute('x', '0');
+			textElement_.setAttribute('y', '0');
+			textElement_.setAttribute('fill', 'black');
 		}
 		if (textElement_.textContent != text_) {
 			textElement_.textContent = text_;

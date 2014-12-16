@@ -1,6 +1,6 @@
 {
   "name": "canvas-text-metrics-polyfill",
-  "version": "0.2.1",
+  "version": "0.2.3",
   "description": "A polyfill for the enhanced context.measureText() in HTML <canvas> v5 / Canvas",
   "main": "src/canvas-text-metrics-polyfill.js",
   "directories": {
