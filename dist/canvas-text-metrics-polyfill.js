@@ -351,7 +351,7 @@ module.exports = function CanvasMeasurementContext() {
 
 			var isArrayBufferView = Object.prototype.toString.call(pixelData8) === "[object Uint8ClampedArray]";
 
-			var len, i, scan;
+			var len, i, j, scan;
 			var pixelData;
 			var value_whiteOpaque;
 			var lineLen;

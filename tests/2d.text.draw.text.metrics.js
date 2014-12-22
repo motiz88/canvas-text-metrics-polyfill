@@ -114,13 +114,13 @@
 		var measureText = CanvasRenderingContext2D.prototype.measureText.bind(ctx);
 		
 		
-		if (CanvasRenderingContext2D.prototype.hasOwnProperty('measureText2'))
-		{
-			measureText = CanvasRenderingContext2D.prototype.measureText2.bind(ctx);		
-			_warn("Using POLYFILL");
-		}
-		else
-			_warn("Using NATIVE");
+		// if (CanvasRenderingContext2D.prototype.hasOwnProperty('measureText2'))
+		// {
+			// measureText = CanvasRenderingContext2D.prototype.measureText2.bind(ctx);		
+			// _warn("Using POLYFILL");
+		// }
+		// else
+			// _warn("Using NATIVE");
 		
 		var texts = {space: "    ", some: "Some Text ♫㎒Ý", high: "M", low: "q"};
 		
