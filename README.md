@@ -16,7 +16,7 @@ See:
 
 Demo
 ----
-TBD
+Try the [visual test page](https://rawgit.com/motiz88/canvas-text-metrics-polyfill/master/tests/visual-test.html).
 
 Tests and performance
 ---------------------
