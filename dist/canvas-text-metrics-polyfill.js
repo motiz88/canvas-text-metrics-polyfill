@@ -796,7 +796,7 @@ global.CanvasRenderingContext2D.prototype.measureText = function measureText(tex
 	if (typeof(model) === 'string')
 		switch (model) {
 		case 'native':
-			return this.measureTextWidth();
+			return this.measureTextWidth.apply(this, arguments);
 		case 'clear-baselines':
 			BaselineCache.clear();
 			break;
