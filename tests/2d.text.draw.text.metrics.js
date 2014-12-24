@@ -81,7 +81,7 @@
 			
 				var baselineX = showBaselinesX;
 				
-				var baselineY = posy+textMetrics[baseline];
+				var baselineY = posy - textMetrics[baseline];
 				var baselineYround = Math.round(baselineY);
 				if (shownBaselineX.hasOwnProperty(baselineYround+''))
 					baselineX = shownBaselineX[baselineYround+''] + 3;

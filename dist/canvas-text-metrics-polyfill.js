@@ -674,6 +674,13 @@ module.exports = function SVGMeasurementContext() {
 ** -----------------------------------------------------------------------------
   
   canvas-text-metrics-polyfill changelog:
+	2014-12-24 - BREAKING CHANGE:
+				 Flipped sign of baseline metrics (emHeightAscent,
+				 emHeightDescent, hangingBaseline, alphabeticBaseline,
+				 ideographicBaseline) to comply with standard.
+				 This also breaks compatibility with Chrome Canary's buggy
+				 implementation.
+	
 	2014-11-19 - Initial release.
 				 Changes on top of fontmetrics.js:
 				 * Reworked API to work as a polyfill for <canvas> v5.
@@ -731,11 +738,25 @@ var sniffSVG = require('./sniffsvg');
 var BaselineCache = require('./BaselineCache');
 
 
-if (document.createElement("canvas")
-	.getContext("2d")
-	.measureText("")
-	.hasOwnProperty("actualBoundingBoxAscent"))
-	// nothing to polyfill
+function isNativeImplementationAvailable() {
+	var metrics = document.createElement("canvas")
+		.getContext("2d")
+		.measureText("");
+		
+	if (typeof metrics.actualBoundingBoxAscent === "undefined")
+		return false;
+	
+	if (metrics.alphabeticBaseline > metrics.hangingBaseline)
+		// nothing to polyfill
+		return false;
+		
+	if (!metrics.emHeightAscent && !metrics.emHeightDescent)
+		return false;
+		
+	return true;
+}
+
+if (isNativeImplementationAvailable())
 	return;
 
 var sniff = sniffSVG(document);
@@ -988,7 +1009,7 @@ global.CanvasRenderingContext2D.prototype.measureText = function measureText(tex
 			}, {
 				top : true
 			});
-		collectedMetrics[baselineProperty] = altmeas.actualBoundingBoxAscent - actualBoundingBoxAscent;
+		collectedMetrics[baselineProperty] = actualBoundingBoxAscent - altmeas.actualBoundingBoxAscent;
 	}
 	canvasMeasuringContext.end();
 
