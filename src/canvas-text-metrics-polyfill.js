@@ -72,6 +72,7 @@
   THE SOFTWARE.
 **/
 /* jshint node: true */
+(function() {
 'use strict';
 
 var CanvasMeasurementContext = require('./CanvasMeasurementContext');
@@ -378,3 +379,5 @@ global.CanvasRenderingContext2D.prototype.measureText = function measureText(tex
 
 	return new TextMetrics(collectedMetrics);
 };
+
+})();
