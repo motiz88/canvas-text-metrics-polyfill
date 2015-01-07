@@ -72,309 +72,313 @@
   THE SOFTWARE.
 **/
 /* jshint node: true */
-'use strict';
+(function() {
+    'use strict';
 
-var CanvasMeasurementContext = require('./CanvasMeasurementContext');
-var SVGMeasurementContext = require('./SVGMeasurementContext');
-var sniffSVG = require('./sniffsvg');
-var BaselineCache = require('./BaselineCache');
+    var CanvasMeasurementContext = require('./CanvasMeasurementContext');
+    var SVGMeasurementContext = require('./SVGMeasurementContext');
+    var sniffSVG = require('./sniffsvg');
+    var BaselineCache = require('./BaselineCache');
 
 
-function isNativeImplementationAvailable() {
-	var metrics = document.createElement("canvas")
-		.getContext("2d")
-		.measureText("");
-		
-	if (typeof metrics.actualBoundingBoxAscent === "undefined")
-		return false;
-	
-	if (metrics.alphabeticBaseline > metrics.hangingBaseline)
-		// nothing to polyfill
-		return false;
-		
-	if (!metrics.emHeightAscent && !metrics.emHeightDescent)
-		return false;
-		
-	return true;
-}
+    function isNativeImplementationAvailable() {
+        var metrics = document.createElement("canvas")
+            .getContext("2d")
+            .measureText("");
 
-if (isNativeImplementationAvailable())
-	return;
+        if (typeof metrics.actualBoundingBoxAscent === "undefined")
+            return false;
 
-var sniff = sniffSVG(document);
+        if (metrics.alphabeticBaseline > metrics.hangingBaseline)
+        // nothing to polyfill
+            return false;
 
-function TextMetrics(metrics) {
-	this.width = 
-		this.actualBoundingBoxLeft = 
-		this.actualBoundingBoxRight = 
-		this.fontBoundingBoxAscent = 
-		this.fontBoundingBoxDescent = 
-		this.actualBoundingBoxAscent = 
-		this.actualBoundingBoxDescent = 
-		this.emHeightAscent = 
-		this.emHeightDescent = 
-		this.hangingBaseline = 
-		this.alphabeticBaseline = 
-		this.ideographicBaseline = undefined;
+        if (!metrics.emHeightAscent && !metrics.emHeightDescent)
+            return false;
 
-	this.raw = metrics;
+        return true;
+    }
 
-	for (var prop in metrics)
-		if (this.hasOwnProperty(prop))
-			this[prop] = metrics[prop];
-}
+    if (isNativeImplementationAvailable())
+        return;
 
-function convertToStandardMetrics(metrics) {
-	return new TextMetrics({
-		width : metrics.width,
-		actualBoundingBoxAscent : metrics.ascent,
-		actualBoundingBoxDescent : metrics.descent,
-		actualBoundingBoxLeft : metrics.bounds.minx,
-		actualBoundingBoxRight : metrics.bounds.maxx
-	});
-}
+    var sniff = sniffSVG(document);
 
-// store the old text metrics function on the Canvas2D prototype
-global.CanvasRenderingContext2D.prototype.measureTextWidth = global.CanvasRenderingContext2D.prototype.measureText;
+    function TextMetrics(metrics) {
+        this.width =
+            this.actualBoundingBoxLeft =
+            this.actualBoundingBoxRight =
+            this.fontBoundingBoxAscent =
+            this.fontBoundingBoxDescent =
+            this.actualBoundingBoxAscent =
+            this.actualBoundingBoxDescent =
+            this.emHeightAscent =
+            this.emHeightDescent =
+            this.hangingBaseline =
+            this.alphabeticBaseline =
+            this.ideographicBaseline = undefined;
 
-/**
- *  shortcut function for getting computed CSS values
- */
+        this.raw = metrics;
 
-function getDirection(el) {
-	var dir = 'ltr';
-	if (el.currentStyle)
-		dir = el.currentStyle.direction;
-	else if (global.getComputedStyle)
-		dir = el.ownerDocument.defaultView.getComputedStyle(el, null).getPropertyValue('direction');
-	return dir;
-}
+        for (var prop in metrics)
+            if (this.hasOwnProperty(prop))
+                this[prop] = metrics[prop];
+    }
 
-var canvasMeasuringContext = null, svgMeasuringContext = null;
+    function convertToStandardMetrics(metrics) {
+        return new TextMetrics({
+            width: metrics.width,
+            actualBoundingBoxAscent: metrics.ascent,
+            actualBoundingBoxDescent: metrics.descent,
+            actualBoundingBoxLeft: metrics.bounds.minx,
+            actualBoundingBoxRight: metrics.bounds.maxx
+        });
+    }
 
-/**
- * The new text metrics function
- */
-global.CanvasRenderingContext2D.prototype.measureText = function measureText(textstring, model) {
-	if (typeof(model) === 'string')
-		switch (model) {
-		case 'native':
-			return this.measureTextWidth.apply(this, arguments);
-		case 'clear-baselines':
-			BaselineCache.clear();
-			break;
-		}
+    // store the old text metrics function on the Canvas2D prototype
+    global.CanvasRenderingContext2D.prototype.measureTextWidth = global.CanvasRenderingContext2D.prototype.measureText;
 
-	var requestedProperties;
+    /**
+     *  shortcut function for getting computed CSS values
+     */
 
-	if ((typeof(model) === 'object') && model) {
-		requestedProperties = {
-			width : true,
-			alphabeticBaseline : false,
-			hangingBaseline : false,
-			ideographicBaseline : false,
-			emHeightAscent : false,
-			emHeightDescent : false,
-			actualBoundingBoxLeft : false,
-			actualBoundingBoxRight : false,
-			actualBoundingBoxAscent : false,
-			actualBoundingBoxDescent : false,
-			fontBoundingBoxAscent : false,
-			fontBoundingBoxDescent : false
-		};
+    function getDirection(el) {
+        var dir = 'ltr';
+        if (el.currentStyle)
+            dir = el.currentStyle.direction;
+        else if (global.getComputedStyle)
+            dir = el.ownerDocument.defaultView.getComputedStyle(el, null).getPropertyValue('direction');
+        return dir;
+    }
 
-		for (var prop in model)
-			requestedProperties[prop] = model[prop] !== undefined;
-	} else
-		requestedProperties = {
-			width : true,
-			alphabeticBaseline : true,
-			hangingBaseline : true,
-			ideographicBaseline : true,
-			emHeightAscent : true,
-			emHeightDescent : true,
-			actualBoundingBoxLeft : true,
-			actualBoundingBoxRight : true,
-			actualBoundingBoxAscent : true,
-			actualBoundingBoxDescent : true,
-			fontBoundingBoxAscent : true,
-			fontBoundingBoxDescent : true
-		};
+    var canvasMeasuringContext = null,
+        svgMeasuringContext = null;
 
-	var doc = (this.canvas && this.canvas.ownerDocument) ? this.canvas.ownerDocument : document;
-	if (!sniff)
-		sniff = sniffSVG(this.doc);
+    /**
+     * The new text metrics function
+     */
+    global.CanvasRenderingContext2D.prototype.measureText = function measureText(textstring, model) {
+        if (typeof(model) === 'string')
+            switch (model) {
+                case 'native':
+                    return this.measureTextWidth.apply(this, arguments);
+                case 'clear-baselines':
+                    BaselineCache.clear();
+                    break;
+            }
 
-	var isSpace = !(/\S/.test(textstring)),
-	isDirRtl = (this.direction == 'rtl') || (this.direction == 'inherit' && getDirection(this.canvas) == 'rtl');
+        var requestedProperties;
 
-	var curStyle = {
-		textBaseline : this.textBaseline,
-		textAlign : this.textAlign,
-		direction : (isDirRtl ? 'rtl' : 'ltr')
-	};
+        if ((typeof(model) === 'object') && model) {
+            requestedProperties = {
+                width: true,
+                alphabeticBaseline: false,
+                hangingBaseline: false,
+                ideographicBaseline: false,
+                emHeightAscent: false,
+                emHeightDescent: false,
+                actualBoundingBoxLeft: false,
+                actualBoundingBoxRight: false,
+                actualBoundingBoxAscent: false,
+                actualBoundingBoxDescent: false,
+                fontBoundingBoxAscent: false,
+                fontBoundingBoxDescent: false
+            };
 
-	var collectedMetrics = {};
+            for (var prop in model)
+                requestedProperties[prop] = model[prop] !== undefined;
+        } else
+            requestedProperties = {
+                width: true,
+                alphabeticBaseline: true,
+                hangingBaseline: true,
+                ideographicBaseline: true,
+                emHeightAscent: true,
+                emHeightDescent: true,
+                actualBoundingBoxLeft: true,
+                actualBoundingBoxRight: true,
+                actualBoundingBoxAscent: true,
+                actualBoundingBoxDescent: true,
+                fontBoundingBoxAscent: true,
+                fontBoundingBoxDescent: true
+            };
 
-	var baselineProperties = {
-		alphabeticBaseline : 'alphabetic',
-		hangingBaseline : 'hanging',
-		ideographicBaseline : 'ideographic',
-		emHeightAscent : 'top',
-		emHeightDescent : 'bottom'
-	};
-	var fontGlobalProperties = {
-		alphabeticBaseline : true,
-		hangingBaseline : true,
-		ideographicBaseline : true,
-		emHeightAscent : true,
-		emHeightDescent : true,
-		fontBoundingBoxAscent : true,
-		fontBoundingBoxDescent : true
-	};
+        var doc = (this.canvas && this.canvas.ownerDocument) ? this.canvas.ownerDocument : document;
+        if (!sniff)
+            sniff = sniffSVG(this.doc);
 
-	if (isSpace) {
-		collectedMetrics.width = this.measureTextWidth(textstring).width;
-		collectedMetrics.actualBoundingBoxLeft = 0;
-		collectedMetrics.actualBoundingBoxRight = collectedMetrics.width;
-		var dx = 0;
-		switch (curStyle.textAlign) {
-		case 'end':
-			dx = (!isDirRtl) ? collectedMetrics.width : 0;
-			break;
-		case 'left':
-			dx = 0;
-			break;
-		case 'center':
-			dx = collectedMetrics.width / 2;
-			break;
-		case 'right':
-			dx = collectedMetrics.width;
-			break;
-		case 'start':
-		/* falls through */
-		default:
-			dx = (!isDirRtl) ? 0 : collectedMetrics.width;
-			break;
-		}
-		collectedMetrics.actualBoundingBoxLeft -= dx;
-		collectedMetrics.actualBoundingBoxRight -= dx;
+        var isSpace = !(/\S/.test(textstring)),
+            isDirRtl = (this.direction == 'rtl') || (this.direction == 'inherit' && getDirection(this.canvas) == 'rtl');
 
-		var fontGlobalModel = {};
-		var anyFontGlobalsRequested = false;
-		for (var requestedProperty in requestedProperties) {
-			if (requestedProperties[requestedProperty]) {
-				if (fontGlobalProperties.hasOwnProperty(requestedProperty))
-					anyFontGlobalsRequested = fontGlobalModel[requestedProperty] = true;
-				else if ((requestedProperty == 'actualBoundingBoxAscent') || (requestedProperty == 'actualBoundingBoxDescent'))
-					anyFontGlobalsRequested = fontGlobalModel.alphabeticBaseline = true;
-			}
-		}
+        var curStyle = {
+            textBaseline: this.textBaseline,
+            textAlign: this.textAlign,
+            direction: (isDirRtl ? 'rtl' : 'ltr')
+        };
 
-		if (anyFontGlobalsRequested) {
-			var nonspace = '_';
-			var nonspaceMetrics = measureText.call(this, nonspace, fontGlobalModel);
+        var collectedMetrics = {};
 
-			for (var fontGlobalProperty in nonspaceMetrics) {
-				if (requestedProperties[fontGlobalProperty] && fontGlobalProperties.hasOwnProperty(fontGlobalProperty) && nonspaceMetrics[fontGlobalProperty] !== undefined)
-					collectedMetrics[fontGlobalProperty] = nonspaceMetrics[fontGlobalProperty];
-			}
-			collectedMetrics.actualBoundingBoxAscent = -nonspaceMetrics.alphabeticBaseline;
-			collectedMetrics.actualBoundingBoxDescent = nonspaceMetrics.alphabeticBaseline;
-		}
+        var baselineProperties = {
+            alphabeticBaseline: 'alphabetic',
+            hangingBaseline: 'hanging',
+            ideographicBaseline: 'ideographic',
+            emHeightAscent: 'top',
+            emHeightDescent: 'bottom'
+        };
+        var fontGlobalProperties = {
+            alphabeticBaseline: true,
+            hangingBaseline: true,
+            ideographicBaseline: true,
+            emHeightAscent: true,
+            emHeightDescent: true,
+            fontBoundingBoxAscent: true,
+            fontBoundingBoxDescent: true
+        };
 
-		return new TextMetrics(collectedMetrics);
-	}
-	//debugger;
+        if (isSpace) {
+            collectedMetrics.width = this.measureTextWidth(textstring).width;
+            collectedMetrics.actualBoundingBoxLeft = 0;
+            collectedMetrics.actualBoundingBoxRight = collectedMetrics.width;
+            var dx = 0;
+            switch (curStyle.textAlign) {
+                case 'end':
+                    dx = (!isDirRtl) ? collectedMetrics.width : 0;
+                    break;
+                case 'left':
+                    dx = 0;
+                    break;
+                case 'center':
+                    dx = collectedMetrics.width / 2;
+                    break;
+                case 'right':
+                    dx = collectedMetrics.width;
+                    break;
+                case 'start':
+                    /* falls through */
+                default:
+                    dx = (!isDirRtl) ? 0 : collectedMetrics.width;
+                    break;
+            }
+            collectedMetrics.actualBoundingBoxLeft -= dx;
+            collectedMetrics.actualBoundingBoxRight -= dx;
 
-	if (!canvasMeasuringContext)
-		canvasMeasuringContext = new CanvasMeasurementContext();
+            var fontGlobalModel = {};
+            var anyFontGlobalsRequested = false;
+            for (var requestedProperty in requestedProperties) {
+                if (requestedProperties[requestedProperty]) {
+                    if (fontGlobalProperties.hasOwnProperty(requestedProperty))
+                        anyFontGlobalsRequested = fontGlobalModel[requestedProperty] = true;
+                    else if ((requestedProperty == 'actualBoundingBoxAscent') || (requestedProperty == 'actualBoundingBoxDescent'))
+                        anyFontGlobalsRequested = fontGlobalModel.alphabeticBaseline = true;
+                }
+            }
 
-	canvasMeasuringContext.document(doc).font(this.font).text(textstring);
+            if (anyFontGlobalsRequested) {
+                var nonspace = '_';
+                var nonspaceMetrics = measureText.call(this, nonspace, fontGlobalModel);
 
-	var edges = {
-		top : true,
-		left : true,
-		right : true,
-		bottom : true
-	};
-	edges.left = requestedProperties.actualBoundingBoxLeft;
-	edges.right = requestedProperties.actualBoundingBoxRight;
-	edges.top = requestedProperties.actualBoundingBoxAscent || requestedProperties.alphabeticBaseline || requestedProperties.hangingBaseline || requestedProperties.ideographicBaseline || requestedProperties.emHeightAscent || requestedProperties.emHeightDescent;
-	edges.bottom = requestedProperties.actualBoundingBoxDescent;
+                for (var fontGlobalProperty in nonspaceMetrics) {
+                    if (requestedProperties[fontGlobalProperty] && fontGlobalProperties.hasOwnProperty(fontGlobalProperty) && nonspaceMetrics[fontGlobalProperty] !== undefined)
+                        collectedMetrics[fontGlobalProperty] = nonspaceMetrics[fontGlobalProperty];
+                }
+                collectedMetrics.actualBoundingBoxAscent = -nonspaceMetrics.alphabeticBaseline;
+                collectedMetrics.actualBoundingBoxDescent = nonspaceMetrics.alphabeticBaseline;
+            }
 
-	var cachedBaselines = BaselineCache.fetch(curStyle);
+            return new TextMetrics(collectedMetrics);
+        }
+        //debugger;
 
-	var partialMetrics = canvasMeasuringContext.measure(curStyle, edges);
+        if (!canvasMeasuringContext)
+            canvasMeasuringContext = new CanvasMeasurementContext();
 
-	var actualBoundingBoxAscent = partialMetrics.actualBoundingBoxAscent; // save it separately so we don't mask it out if it wasn't requested
+        canvasMeasuringContext.document(doc).font(this.font).text(textstring);
 
-	for (var metric in partialMetrics) {
-		if (requestedProperties[metric] && partialMetrics[metric] !== undefined) {
-			collectedMetrics[metric] = partialMetrics[metric];
-		}
-	}
+        var edges = {
+            top: true,
+            left: true,
+            right: true,
+            bottom: true
+        };
+        edges.left = requestedProperties.actualBoundingBoxLeft;
+        edges.right = requestedProperties.actualBoundingBoxRight;
+        edges.top = requestedProperties.actualBoundingBoxAscent || requestedProperties.alphabeticBaseline || requestedProperties.hangingBaseline || requestedProperties.ideographicBaseline || requestedProperties.emHeightAscent || requestedProperties.emHeightDescent;
+        edges.bottom = requestedProperties.actualBoundingBoxDescent;
 
-	var baselineMetrics = {};
+        var cachedBaselines = BaselineCache.fetch(curStyle);
 
-	var firstBaseline = true;
+        var partialMetrics = canvasMeasuringContext.measure(curStyle, edges);
 
-	for (var baselineProperty in baselineProperties) {
-		if (!requestedProperties[baselineProperty])
-			continue;
-		if (baselineProperties[baselineProperty] == this.textBaseline) {
-			collectedMetrics[baselineProperty] = 0;
-			continue;
-		}
-		if (cachedBaselines.hasOwnProperty(baselineProperty)) {
-			collectedMetrics[baselineProperty] = cachedBaselines[baselineProperty];
-			continue;
-		}
-		if (collectedMetrics.hasOwnProperty(baselineProperty))
-			continue;
-		var baselineValue = baselineProperties[baselineProperty];
+        var actualBoundingBoxAscent = partialMetrics.actualBoundingBoxAscent; // save it separately so we don't mask it out if it wasn't requested
 
-		if (firstBaseline) {
-			if (textstring.length > 1) // fudge the text string because we're only looking for font metrics independent of the text
-			{
-				actualBoundingBoxAscent = canvasMeasuringContext.text('_').measure(curStyle, {
-						top : true
-					}).actualBoundingBoxAscent;
-			}
-			firstBaseline = false;
-		}
+        for (var metric in partialMetrics) {
+            if (requestedProperties[metric] && partialMetrics[metric] !== undefined) {
+                collectedMetrics[metric] = partialMetrics[metric];
+            }
+        }
 
-		var altmeas = canvasMeasuringContext.measure({
-				textBaseline : baselineValue,
-				textAlign : this.textAlign,
-				direction : (isDirRtl ? 'rtl' : 'ltr')
-			}, {
-				top : true
-			});
-		collectedMetrics[baselineProperty] = actualBoundingBoxAscent - altmeas.actualBoundingBoxAscent;
-	}
-	canvasMeasuringContext.end();
+        var baselineMetrics = {};
 
-	if (requestedProperties.width && !collectedMetrics.hasOwnProperty('width'))
-		collectedMetrics.width = this.measureTextWidth(textstring).width;
+        var firstBaseline = true;
 
-	if (requestedProperties.fontBoundingBoxAscent || requestedProperties.fontBoundingBoxDescent) {
-		if (sniff.svg && sniff.svgText11) {
-			if (!svgMeasuringContext)
-				svgMeasuringContext = new SVGMeasurementContext();
-			svgMeasuringContext.document(doc).font(this.font).text(textstring);
-			var svgmeas = svgMeasuringContext.measure(curStyle, {
-					top : true,
-					bottom : true
-				});
-			if (requestedProperties.fontBoundingBoxAscent)
-				collectedMetrics.fontBoundingBoxAscent = svgmeas.fontBoundingBoxAscent;
-			if (requestedProperties.fontBoundingBoxDescent)
-				collectedMetrics.fontBoundingBoxDescent = svgmeas.fontBoundingBoxDescent;
-			svgMeasuringContext.end();
-		}
-	}
-	BaselineCache.store(curStyle, collectedMetrics);
+        for (var baselineProperty in baselineProperties) {
+            if (!requestedProperties[baselineProperty])
+                continue;
+            if (baselineProperties[baselineProperty] == this.textBaseline) {
+                collectedMetrics[baselineProperty] = 0;
+                continue;
+            }
+            if (cachedBaselines.hasOwnProperty(baselineProperty)) {
+                collectedMetrics[baselineProperty] = cachedBaselines[baselineProperty];
+                continue;
+            }
+            if (collectedMetrics.hasOwnProperty(baselineProperty))
+                continue;
+            var baselineValue = baselineProperties[baselineProperty];
 
-	return new TextMetrics(collectedMetrics);
-};
+            if (firstBaseline) {
+                if (textstring.length > 1) // fudge the text string because we're only looking for font metrics independent of the text
+                {
+                    actualBoundingBoxAscent = canvasMeasuringContext.text('_').measure(curStyle, {
+                        top: true
+                    }).actualBoundingBoxAscent;
+                }
+                firstBaseline = false;
+            }
+
+            var altmeas = canvasMeasuringContext.measure({
+                textBaseline: baselineValue,
+                textAlign: this.textAlign,
+                direction: (isDirRtl ? 'rtl' : 'ltr')
+            }, {
+                top: true
+            });
+            collectedMetrics[baselineProperty] = actualBoundingBoxAscent - altmeas.actualBoundingBoxAscent;
+        }
+        canvasMeasuringContext.end();
+
+        if (requestedProperties.width && !collectedMetrics.hasOwnProperty('width'))
+            collectedMetrics.width = this.measureTextWidth(textstring).width;
+
+        if (requestedProperties.fontBoundingBoxAscent || requestedProperties.fontBoundingBoxDescent) {
+            if (sniff.svg && sniff.svgText11) {
+                if (!svgMeasuringContext)
+                    svgMeasuringContext = new SVGMeasurementContext();
+                svgMeasuringContext.document(doc).font(this.font).text(textstring);
+                var svgmeas = svgMeasuringContext.measure(curStyle, {
+                    top: true,
+                    bottom: true
+                });
+                if (requestedProperties.fontBoundingBoxAscent)
+                    collectedMetrics.fontBoundingBoxAscent = svgmeas.fontBoundingBoxAscent;
+                if (requestedProperties.fontBoundingBoxDescent)
+                    collectedMetrics.fontBoundingBoxDescent = svgmeas.fontBoundingBoxDescent;
+                svgMeasuringContext.end();
+            }
+        }
+        BaselineCache.store(curStyle, collectedMetrics);
+
+        return new TextMetrics(collectedMetrics);
+    };
+
+})();
