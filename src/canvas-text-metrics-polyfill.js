@@ -136,7 +136,7 @@
     }
 
     // store the old text metrics function on the Canvas2D prototype
-    global.CanvasRenderingContext2D.prototype.measureTextWidth = global.CanvasRenderingContext2D.prototype.measureText;
+    CanvasRenderingContext2D.prototype.measureTextWidth = CanvasRenderingContext2D.prototype.measureText;
 
     /**
      *  shortcut function for getting computed CSS values
@@ -146,7 +146,7 @@
         var dir = 'ltr';
         if (el.currentStyle)
             dir = el.currentStyle.direction;
-        else if (global.getComputedStyle)
+        else if (window.getComputedStyle)
             dir = el.ownerDocument.defaultView.getComputedStyle(el, null).getPropertyValue('direction');
         return dir;
     }
@@ -157,7 +157,7 @@
     /**
      * The new text metrics function
      */
-    global.CanvasRenderingContext2D.prototype.measureText = function measureText(textstring, model) {
+    CanvasRenderingContext2D.prototype.measureText = function measureText(textstring, model) {
         if (typeof(model) === 'string')
             switch (model) {
                 case 'native':
