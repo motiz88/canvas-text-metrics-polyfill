@@ -655,7 +655,6 @@ module.exports = function SVGMeasurementContext() {
 };
 
 },{}],4:[function(require,module,exports){
-(function (global){
 /**
 
   A polyfill for the enhanced context.measureText() in HTML <canvas> v5 / Canvas
@@ -794,7 +793,7 @@ module.exports = function SVGMeasurementContext() {
     }
 
     // store the old text metrics function on the Canvas2D prototype
-    global.CanvasRenderingContext2D.prototype.measureTextWidth = global.CanvasRenderingContext2D.prototype.measureText;
+    CanvasRenderingContext2D.prototype.measureTextWidth = CanvasRenderingContext2D.prototype.measureText;
 
     /**
      *  shortcut function for getting computed CSS values
@@ -804,7 +803,7 @@ module.exports = function SVGMeasurementContext() {
         var dir = 'ltr';
         if (el.currentStyle)
             dir = el.currentStyle.direction;
-        else if (global.getComputedStyle)
+        else if (window.getComputedStyle)
             dir = el.ownerDocument.defaultView.getComputedStyle(el, null).getPropertyValue('direction');
         return dir;
     }
@@ -815,7 +814,7 @@ module.exports = function SVGMeasurementContext() {
     /**
      * The new text metrics function
      */
-    global.CanvasRenderingContext2D.prototype.measureText = function measureText(textstring, model) {
+    CanvasRenderingContext2D.prototype.measureText = function measureText(textstring, model) {
         if (typeof(model) === 'string')
             switch (model) {
                 case 'native':
@@ -1040,7 +1039,6 @@ module.exports = function SVGMeasurementContext() {
     };
 
 })();
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"./BaselineCache":1,"./CanvasMeasurementContext":2,"./SVGMeasurementContext":3,"./sniffsvg":5}],5:[function(require,module,exports){
 var svgNS = 'http://www.w3.org/2000/svg';
 module.exports = function sniffSVG(document) {
