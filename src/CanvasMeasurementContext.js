@@ -103,7 +103,7 @@ module.exports = function CanvasMeasurementContext() {
 		makeRootElement_();
 		if (!rootElement_ || !ctx_)
 			return;
-		if (ctx_.font != font_) {
+		if (ctx_.font != font_ || !fontSize_) {
 			rootElement_.style.font = rootElement_.font = ctx_.font = font_;
 			fontSize_ = 1 * rootElement_.style.fontSize.replace("px", "");
 
